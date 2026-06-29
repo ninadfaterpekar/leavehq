@@ -1,7 +1,7 @@
 import { AriaAttributes, DOMAttributes } from 'react'
 
 type CustomElement<T = {}> = Partial<
-  T & DOMAttributes<T> & AriaAttributes & { children: React.ReactNode; class: string; style: React.CSSProperties; key: React.Key }
+  T & DOMAttributes<T> & AriaAttributes & { children: React.ReactNode; class: string; style: React.CSSProperties; key: React.Key; ref: React.Ref<any> }
 >
 
 declare global {
@@ -23,8 +23,12 @@ declare global {
       'rel-container': CustomElement<{ padding?: string; shadow?: boolean; background?: string }>
       'rel-layout': CustomElement<{ gap?: string; columns?: number; responsive?: boolean }>
       'rel-divider': CustomElement<{ orientation?: string }>
-      'rel-textfield': CustomElement<{ label?: string; placeholder?: string; value?: string; type?: string; disabled?: boolean; required?: boolean; error?: string; size?: string }>
-      'rel-select': CustomElement<{ label?: string; placeholder?: string; value?: string; disabled?: boolean; required?: boolean; options?: any }>
+      'rel-textfield': CustomElement<{ label?: string; placeholder?: string; value?: string; type?: string; disabled?: boolean; required?: boolean; state?: string; size?: string; variant?: string }>
+      'rel-select': CustomElement<{ label?: string; placeholder?: string; selected?: string; disabled?: boolean; required?: boolean; 'no-search'?: boolean; size?: string }>
+      'rel-date-picker': CustomElement<{ value?: string; label?: string; placeholder?: string; min?: string; max?: string; required?: boolean; disabled?: boolean; clearable?: boolean }>
+      'rel-range-picker': CustomElement<{ from?: string; to?: string; 'min-date'?: string; 'max-date'?: string; disabled?: boolean; placeholder?: string; mode?: string }>
+      'rel-segmented-button': CustomElement<{ active?: string; size?: string; align?: string }>
+      'rel-checkbox': CustomElement<{ checked?: boolean; value?: string; disabled?: boolean; label?: string }>
     }
   }
 }

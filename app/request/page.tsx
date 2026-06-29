@@ -1,28 +1,22 @@
 'use client'
 export const dynamic = 'force-dynamic'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 import { getWorkingDays, calcDeduction, todayISO } from '@/lib/leave'
 import { useRouter } from 'next/navigation'
 import Topbar from '@/components/layout/Topbar'
 import { Profile } from '@/types'
 
-const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '9px 12px',
-  border: '1px solid var(--rel-color-border-default)',
-  borderRadius: 'var(--rel-borders-radius-border-radius-200)',
-  fontSize: 'var(--rel-fontSizes-md)',
-  color: 'var(--rel-color-text-primary)',
-  outline: 'none', fontFamily: 'inherit', background: '#fff',
-}
+const LEAVE_OPTIONS = [
+  { value: 'annual', label: 'Annual Leave' },
+  { value: 'sick',   label: 'Sick Leave' },
+  { value: 'unpaid', label: 'Unpaid Leave' },
+]
 
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: 'var(--rel-fontSizes-md)',
-  fontWeight: 'var(--rel-fontWeights-medium)' as any,
-  color: 'var(--rel-color-text-heading)',
-  marginBottom: '6px',
-}
+const MODE_OPTIONS = [
+  { value: 'single', label: 'Single day' },
+  { value: 'range',  label: 'Date range' },
+]
 
 export default function RequestPage() {
   const router = useRouter()
@@ -39,11 +33,47 @@ export default function RequestPage() {
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
 
+  const selectRef = useRef<any>(null)
+  const segmentRef = useRef<any>(null)
+  const datePickerRef = useRef<any>(null)
+  const rangePickerRef = useRef<any>(null)
+
   const today = todayISO()
   const effectiveEnd = mode === 'single' ? startDate : endDate
   const workingDays = getWorkingDays(startDate, effectiveEnd)
   const deduction = calcDeduction(leaveType, workingDays, balance.remaining, profile?.daily_rate || 120)
   const canSubmit = workingDays > 0 && (!deduction.applies || acknowledged)
+
+  // Set array options on mount (can't pass arrays as HTML attributes)
+  useEffect(() => {
+    if (selectRef.current)  selectRef.current.options  = LEAVE_OPTIONS
+    if (segmentRef.current) segmentRef.current.options = MODE_OPTIONS
+  }, [])
+
+  // Wire up rel-change events
+  useEffect(() => {
+    const sel  = selectRef.current
+    const seg  = segmentRef.current
+    const dp   = datePickerRef.current
+    const rp   = rangePickerRef.current
+
+    const onLeaveType = (e: any) => { setLeaveType(e.detail.value); setAcknowledged(false) }
+    const onMode      = (e: any) => { setMode(e.detail.value); setStartDate(''); setEndDate(''); setAcknowledged(false) }
+    const onDate      = (e: any) => { setStartDate(e.detail.value || ''); setAcknowledged(false) }
+    const onRange     = (e: any) => { setStartDate(e.detail.from || ''); setEndDate(e.detail.to || ''); setAcknowledged(false) }
+
+    sel?.addEventListener('rel-change', onLeaveType)
+    seg?.addEventListener('rel-change', onMode)
+    dp?.addEventListener('rel-change', onDate)
+    rp?.addEventListener('rel-change', onRange)
+
+    return () => {
+      sel?.removeEventListener('rel-change', onLeaveType)
+      seg?.removeEventListener('rel-change', onMode)
+      dp?.removeEventListener('rel-change', onDate)
+      rp?.removeEventListener('rel-change', onRange)
+    }
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -68,9 +98,7 @@ export default function RequestPage() {
 
   async function handleSubmit() {
     if (!canSubmit || loading) return
-    setLoading(true)
-    setStatus('idle')
-    setErrorMsg('')
+    setLoading(true); setStatus('idle'); setErrorMsg('')
     const res = await fetch('/api/leave', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -81,6 +109,8 @@ export default function RequestPage() {
       setStatus('success')
       setBalance(b => ({ ...b, used: b.used + workingDays, remaining: Math.max(0, b.remaining - workingDays) }))
       setStartDate(''); setEndDate(''); setNote(''); setAcknowledged(false)
+      if (datePickerRef.current) datePickerRef.current.value = null
+      if (rangePickerRef.current) { rangePickerRef.current.from = ''; rangePickerRef.current.to = '' }
     } else {
       setStatus('error')
       setErrorMsg(data.error || 'Something went wrong')
@@ -96,7 +126,7 @@ export default function RequestPage() {
         <h1 style={{ fontSize: 'var(--rel-fontSizes-lg)', fontWeight: 'var(--rel-fontWeights-semibold)', marginBottom: '4px', color: 'var(--rel-color-text-heading)' }}>
           Request Leave
         </h1>
-        <p style={{ color: 'var(--rel-color-text-secondary)', marginBottom: '24px', fontSize: 'var(--rel-fontSizes-md)' }}>
+        <p style={{ color: 'var(--rel-color-text-secondary)', marginBottom: '24px' }}>
           Submit a request. Your manager will be notified by email.
         </p>
 
@@ -121,20 +151,20 @@ export default function RequestPage() {
         </rel-card>
 
         {balance.remaining === 0 && (
-          <div style={{ marginBottom: '16px' }}>
+          <div style={{ margin: '16px 0' }}>
             <rel-alert type="info" message1="No annual leave remaining. You can still request unpaid leave." />
           </div>
         )}
 
         {/* Form */}
         <rel-card>
-          <div style={{ fontSize: 'var(--rel-fontSizes-md)', fontWeight: 'var(--rel-fontWeights-semibold)', marginBottom: '16px' }}>
+          <div style={{ fontSize: 'var(--rel-fontSizes-md)', fontWeight: 'var(--rel-fontWeights-semibold)', marginBottom: '20px' }}>
             Leave details
           </div>
 
           {status === 'success' && (
             <div style={{ marginBottom: '16px' }}>
-              <rel-alert type="success" message1="Request submitted successfully. Your manager has been notified by email." />
+              <rel-alert type="success" message1="Request submitted. Your manager has been notified by email." />
             </div>
           )}
           {status === 'error' && (
@@ -144,51 +174,46 @@ export default function RequestPage() {
           )}
 
           {/* Leave type */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={labelStyle}>Leave type</label>
-            <select style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}
-              value={leaveType}
-              onChange={e => { setLeaveType(e.target.value as any); setAcknowledged(false) }}>
-              <option value="annual">Annual Leave</option>
-              <option value="sick">Sick Leave</option>
-              <option value="unpaid">Unpaid Leave</option>
-            </select>
+          <div style={{ marginBottom: '20px' }}>
+            <rel-select
+              ref={selectRef}
+              label="Leave type"
+              selected={leaveType}
+              no-search
+              size="medium"
+            />
           </div>
 
           {/* Single / Range toggle */}
-          <div style={{ display: 'flex', background: 'var(--rel-color-bg-tertiary)', borderRadius: 'var(--rel-borders-radius-border-radius-200)', padding: '3px', width: 'fit-content', marginBottom: '16px' }}>
-            {(['single', 'range'] as const).map(m => (
-              <button key={m} type="button"
-                onClick={() => { setMode(m); setEndDate(''); setAcknowledged(false) }}
-                style={{
-                  padding: '6px 18px', border: 'none',
-                  borderRadius: 'var(--rel-borders-radius-border-radius-100)',
-                  fontSize: 'var(--rel-fontSizes-md)',
-                  fontWeight: 'var(--rel-fontWeights-medium)' as any,
-                  cursor: 'pointer', fontFamily: 'inherit',
-                  background: mode === m ? '#fff' : 'transparent',
-                  color: mode === m ? 'var(--rel-color-text-heading)' : 'var(--rel-color-text-secondary)',
-                  boxShadow: mode === m ? 'var(--rel-shadows-shadow-100)' : 'none',
-                  transition: 'all 0.15s',
-                }}>
-                {m === 'single' ? 'Single day' : 'Date range'}
-              </button>
-            ))}
+          <div style={{ marginBottom: '20px' }}>
+            <rel-segmented-button
+              ref={segmentRef}
+              active={mode}
+              size="medium"
+            />
           </div>
 
-          {/* Dates */}
-          <div style={{ display: 'grid', gridTemplateColumns: mode === 'range' ? '1fr 1fr' : '1fr', gap: '12px', marginBottom: '16px' }}>
-            <div>
-              <label style={labelStyle}>{mode === 'range' ? 'Start date' : 'Date'}</label>
-              <input type="date" style={inputStyle} min={today} value={startDate}
-                onChange={e => { setStartDate(e.target.value); setAcknowledged(false) }} required />
-            </div>
-            {mode === 'range' && (
-              <div>
-                <label style={labelStyle}>End date</label>
-                <input type="date" style={inputStyle} min={startDate || today} value={endDate}
-                  onChange={e => { setEndDate(e.target.value); setAcknowledged(false) }} required />
-              </div>
+          {/* Date picker */}
+          <div style={{ marginBottom: '20px' }}>
+            {mode === 'single' ? (
+              <rel-date-picker
+                ref={datePickerRef}
+                label="Date"
+                placeholder="Select a date"
+                min={today}
+                value={startDate || undefined}
+                required
+                clearable
+              />
+            ) : (
+              <rel-range-picker
+                ref={rangePickerRef}
+                placeholder="Select date range"
+                min-date={today}
+                from={startDate || undefined}
+                to={endDate || undefined}
+                mode="popover"
+              />
             )}
           </div>
 
@@ -202,8 +227,20 @@ export default function RequestPage() {
           {/* Pay deduction warning */}
           {deduction.applies && workingDays > 0 && (
             <div style={{ marginBottom: '16px' }}>
-              <rel-alert type="warning" message1={`Pay deduction applies. You are requesting ${deduction.excess_days} day${deduction.excess_days !== 1 ? 's' : ''} beyond your allowance — this will reduce your pay by ${deduction.formatted}.`} />
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 14px', background: 'var(--rel-background-warning)', border: '1px solid var(--rel-border-warning)', borderRadius: 'var(--rel-borders-radius-border-radius-200)', marginTop: '8px', cursor: 'pointer', fontSize: 'var(--rel-fontSizes-md)', color: 'var(--rel-colors-orange-warning)', fontWeight: 'var(--rel-fontWeights-medium)' as any }}>
+              <rel-alert
+                type="warning"
+                message1={`Pay deduction applies — ${deduction.excess_days} day${deduction.excess_days !== 1 ? 's' : ''} beyond your allowance will reduce your pay by ${deduction.formatted}.`}
+              />
+              <label style={{
+                display: 'flex', alignItems: 'flex-start', gap: '10px',
+                padding: '12px 14px', marginTop: '8px', cursor: 'pointer',
+                background: 'var(--rel-background-warning)',
+                border: '1px solid var(--rel-border-warning)',
+                borderRadius: 'var(--rel-borders-radius-border-radius-200)',
+                fontSize: 'var(--rel-fontSizes-md)',
+                color: 'var(--rel-colors-orange-warning)',
+                fontWeight: 'var(--rel-fontWeights-medium)' as any,
+              }}>
                 <input type="checkbox" checked={acknowledged} onChange={e => setAcknowledged(e.target.checked)}
                   style={{ marginTop: '2px', width: '15px', height: '15px', flexShrink: 0 }} />
                 I understand this leave will reduce my pay by {deduction.formatted} this period.
@@ -214,20 +251,13 @@ export default function RequestPage() {
           <rel-divider />
 
           {/* Note */}
-          <div style={{ margin: '16px 0 20px' }}>
-            <label style={labelStyle}>
-              Note for your manager <span style={{ color: 'var(--rel-color-text-secondary)', fontWeight: 400 }}>(optional)</span>
-            </label>
-            <textarea
-              style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }}
+          <div style={{ margin: '20px 0' }}>
+            <rel-textfield
+              label="Note for your manager (optional)"
               placeholder="Add any context that might help your manager..."
-              maxLength={200}
               value={note}
-              onChange={e => setNote(e.target.value)}
+              onInput={(e: any) => setNote(e.target.value)}
             />
-            <div style={{ fontSize: 'var(--rel-fontSizes-xs)', color: note.length > 180 ? 'var(--rel-colors-orange-warning)' : 'var(--rel-color-text-secondary)', textAlign: 'right', marginTop: '4px' }}>
-              {note.length} / 200
-            </div>
           </div>
 
           {/* Actions */}
