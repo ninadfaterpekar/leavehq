@@ -1,7 +1,7 @@
 import { AriaAttributes, DOMAttributes } from 'react'
 
 type CustomElement<T = {}> = Partial<
-  T & DOMAttributes<T> & AriaAttributes & { children: React.ReactNode; class: string; style: React.CSSProperties }
+  T & DOMAttributes<T> & AriaAttributes & { children: React.ReactNode; class: string; style: React.CSSProperties; key: React.Key }
 >
 
 declare global {
