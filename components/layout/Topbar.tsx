@@ -33,13 +33,10 @@ export default function Topbar({ profile }: { profile: Profile | null }) {
   ]
 
   return (
-    // @ts-ignore
     <rel-topbar sticky variant="customer">
-      {/* @ts-ignore */}
       <rel-topbar-brand label="LeaveHQ" href="/dashboard" />
 
       {navLinks.map(link => (
-        // @ts-ignore
         <rel-topbar-item
           key={link.href}
           label={link.label}
@@ -48,7 +45,6 @@ export default function Topbar({ profile }: { profile: Profile | null }) {
         />
       ))}
 
-      {/* @ts-ignore */}
       <rel-topbar-profile
         type="avatar"
         initials={initials}
@@ -56,9 +52,7 @@ export default function Topbar({ profile }: { profile: Profile | null }) {
         subtitle={profile?.role ? roleLabel[profile.role] : ''}
       />
 
-      {/* @ts-ignore */}
       <rel-topbar-actions>
-        {/* @ts-ignore */}
         <rel-button variant="default" size="small" onClick={handleSignOut}>Sign out</rel-button>
       </rel-topbar-actions>
     </rel-topbar>

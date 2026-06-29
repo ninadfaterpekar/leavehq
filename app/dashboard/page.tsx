@@ -54,18 +54,17 @@ export default async function DashboardPage() {
             Good {getTimeOfDay()}, {profile?.full_name?.split(' ')[0] || 'there'} 👋
           </h1>
           <p style={{ color: 'var(--color-text-secondary)', marginTop: '4px' }}>
-            Here's your leave summary for {year}.
+            Here&apos;s your leave summary for {year}.
           </p>
         </div>
 
-        {/* Balance cards using rel-card */}
+        {/* Balance cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '12px', marginBottom: '24px' }}>
           {[
             { label: 'Total allowance', value: allowed, sub: 'days this year', color: 'var(--color-text)' },
             { label: 'Days used', value: usedDays, sub: 'approved + pending', color: usedDays > 15 ? '#f59e0b' : 'var(--color-text)' },
             { label: 'Remaining', value: remaining, sub: 'days left', color: remaining <= 3 ? '#ef4444' : '#10b981' },
           ].map(card => (
-            // @ts-ignore
             <rel-card key={card.label}>
               <div style={{ textAlign: 'center', padding: '8px 0' }}>
                 <div style={{ fontSize: '11px', fontWeight: '600', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
@@ -78,17 +77,14 @@ export default async function DashboardPage() {
                   {card.sub}
                 </div>
               </div>
-            {/* @ts-ignore */}
             </rel-card>
           ))}
         </div>
 
         {/* Leave history */}
-        {/* @ts-ignore */}
         <rel-card>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <span style={{ fontSize: '14px', fontWeight: '600' }}>Leave history</span>
-            {/* @ts-ignore */}
             <rel-button variant="primary" size="small" onClick="location.href='/request'">
               + New request
             </rel-button>
@@ -117,7 +113,6 @@ export default async function DashboardPage() {
                     <td style={{ padding: '12px', fontSize: '13px' }}>{formatDate(r.end_date)}</td>
                     <td style={{ padding: '12px', fontSize: '13px', fontWeight: '500' }}>{r.working_days}</td>
                     <td style={{ padding: '12px' }}>
-                      {/* @ts-ignore */}
                       <rel-chip
                         label={chipLabel[r.status] || r.status}
                         tone={chipTone[r.status] || 'neutral'}
@@ -133,7 +128,6 @@ export default async function DashboardPage() {
               </tbody>
             </table>
           )}
-        {/* @ts-ignore */}
         </rel-card>
 
       </div>
