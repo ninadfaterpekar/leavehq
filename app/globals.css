@@ -27,7 +27,7 @@
 }
 
 body {
-  font-family: var(--font-poppins, var(--rel-fontFamilies-primary));
+  font-family: var(--rel-fontFamilies-primary);
   background: var(--color-bg);
   color: var(--color-text);
   min-height: 100vh;
