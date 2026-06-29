@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient, createAdminClient } from '@/lib/supabase-server'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase'
 import { sendManagerNotification, sendAdminNotification } from '@/lib/email'
 import { getWorkingDays, formatDate } from '@/lib/leave'
