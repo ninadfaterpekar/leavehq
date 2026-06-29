@@ -1,18 +1,9 @@
 'use client'
-import { useRouter, usePathname } from 'next/navigation'
-import { createClient } from '@/lib/supabase'
+import { usePathname } from 'next/navigation'
 import { Profile } from '@/types'
 
 export default function Topbar({ profile }: { profile: Profile | null }) {
-  const router = useRouter()
   const pathname = usePathname()
-  const supabase = createClient()
-
-  async function handleSignOut() {
-    await supabase.auth.signOut()
-    router.push('/auth')
-    router.refresh()
-  }
 
   const initials = profile?.full_name
     ? profile.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
@@ -51,10 +42,6 @@ export default function Topbar({ profile }: { profile: Profile | null }) {
         name={profile?.full_name || ''}
         subtitle={profile?.role ? roleLabel[profile.role] : ''}
       />
-
-      <rel-topbar-actions>
-        <rel-button variant="default" size="small" onClick={handleSignOut}>Sign out</rel-button>
-      </rel-topbar-actions>
     </rel-topbar>
   )
 }

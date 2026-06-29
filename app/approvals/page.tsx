@@ -18,7 +18,7 @@ export default function ApprovalsPage() {
   useEffect(() => {
     async function load() {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { router.push('/auth'); return }
+      if (!session) { return }
       const { data: p } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
       if (!p || !['manager', 'supervisor', 'admin'].includes(p.role)) { router.push('/dashboard'); return }
       setProfile(p)
