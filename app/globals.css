@@ -1,0 +1,41 @@
+
+@import "@reliability-design/web/vars.css";
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Map local tokens to design system tokens */
+  --color-primary: var(--rel-colors-black);
+  --color-primary-hover: var(--rel-colors-gray-heading);
+  --color-primary-light: var(--rel-colors-gray-surface);
+  --color-success: var(--rel-colors-green-success);
+  --color-success-light: var(--rel-colors-green-bg-light);
+  --color-warning: var(--rel-colors-orange-warning);
+  --color-warning-light: var(--rel-colors-orange-bg-light);
+  --color-danger: var(--rel-colors-red-primary);
+  --color-danger-light: var(--rel-colors-red-bg-alert);
+  --color-border: var(--rel-color-border-default);
+  --color-bg: var(--rel-colors-gray-screen-bg);
+  --color-surface: var(--rel-colors-white);
+  --color-text: var(--rel-color-text-heading);
+  --color-text-secondary: var(--rel-colors-gray-placeholder);
+  --color-text-tertiary: var(--rel-color-text-secondary);
+  --radius-sm: var(--rel-borders-radius-border-radius-100);
+  --radius-md: var(--rel-borders-radius-border-radius-200);
+  --radius-lg: var(--rel-borders-radius-border-radius-300);
+  --shadow-sm: var(--rel-shadows-shadow-100);
+  --shadow-md: var(--rel-shadows-shadow-200);
+}
+
+body {
+  font-family: var(--font-poppins, var(--rel-fontFamilies-primary));
+  background: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100vh;
+  font-size: var(--rel-fontSizes-md);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; }
+input, select, textarea { font-family: inherit; }
