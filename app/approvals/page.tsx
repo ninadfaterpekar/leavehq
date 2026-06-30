@@ -1,10 +1,28 @@
 'use client'
 export const dynamic = 'force-dynamic'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 import { formatDate } from '@/lib/leave'
 import { useRouter } from 'next/navigation'
 import Topbar from '@/components/layout/Topbar'
+
+function NoteField({ requestId, onChange }: { requestId: string; onChange: (id: string, v: string) => void }) {
+  const ref = useRef<any>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const handler = (e: any) => onChange(requestId, e.detail.value || '')
+    el.addEventListener('rel-change', handler)
+    return () => el.removeEventListener('rel-change', handler)
+  }, [requestId, onChange])
+  return (
+    <rel-textfield
+      ref={ref}
+      label="Add a note (optional)"
+      placeholder="Reason for approval or rejection…"
+    />
+  )
+}
 
 export default function ApprovalsPage() {
   const router = useRouter()
@@ -15,10 +33,14 @@ export default function ApprovalsPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [notes, setNotes] = useState<Record<string, string>>({})
 
+  const handleNoteChange = (id: string, value: string) => {
+    setNotes(n => ({ ...n, [id]: value }))
+  }
+
   useEffect(() => {
     async function load() {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { return }
+      if (!session) return
       const { data: p } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
       if (!p || !['manager', 'supervisor', 'admin'].includes(p.role)) { router.push('/dashboard'); return }
       setProfile(p)
@@ -54,91 +76,98 @@ export default function ApprovalsPage() {
     setActionLoading(null)
   }
 
-  const card: React.CSSProperties = { background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '20px 24px', marginBottom: '12px' }
-  const input: React.CSSProperties = { width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '13px', outline: 'none', fontFamily: 'inherit' }
-
   return (
     <>
       <Topbar profile={profile} />
       <div style={{ maxWidth: '800px', margin: '32px auto', padding: '0 24px 48px' }}>
 
-        <h1 style={{ fontSize: '22px', fontWeight: '600', marginBottom: '4px' }}>Pending Approvals</h1>
-        <p style={{ color: '#6b7280', marginBottom: '24px' }}>Review and action leave requests from your team.</p>
+        <h1 style={{ fontSize: '22px', fontWeight: '600', marginBottom: '4px', color: 'var(--rel-colors-black)', lineHeight: 1.2 }}>
+          Pending Approvals
+        </h1>
+        <p style={{ color: 'var(--rel-colors-gray-primary)', marginBottom: '24px', fontSize: '13px', lineHeight: 1.5 }}>
+          Review and action leave requests from your team.
+        </p>
 
-        {loading && <div style={{ color: '#6b7280', fontSize: '14px' }}>Loading requests…</div>}
-
-        {!loading && requests.length === 0 && (
-          <div style={{ ...card, textAlign: 'center', padding: '48px 24px' }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>✅</div>
-            <div style={{ fontSize: '15px', fontWeight: '600', color: '#6b7280' }}>All caught up</div>
-            <div style={{ fontSize: '13px', color: '#9ca3af', marginTop: '4px' }}>No pending leave requests from your team.</div>
+        {loading && (
+          <div style={{ color: 'var(--rel-colors-gray-primary)', fontSize: '13px' }} aria-busy="true">
+            Loading requests…
           </div>
         )}
 
+        {!loading && requests.length === 0 && (
+          <rel-card>
+            <div style={{ textAlign: 'center', padding: '32px 0' }}>
+              <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--rel-colors-gray-primary)' }}>All caught up</div>
+              <div style={{ fontSize: '13px', color: 'var(--rel-colors-gray-placeholder)', marginTop: '4px', lineHeight: 1.5 }}>
+                No pending leave requests from your team.
+              </div>
+            </div>
+          </rel-card>
+        )}
+
         {requests.map((r: any) => (
-          <div key={r.id} style={card}>
-
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
-              <div>
-                <div style={{ fontSize: '15px', fontWeight: '600' }}>{r.profile?.full_name}</div>
-                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px', textTransform: 'capitalize' }}>
-                  {r.profile?.role} · {r.leave_type} Leave
+          <div key={r.id} style={{ marginBottom: '12px' }}>
+            <rel-card>
+              {/* Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--rel-colors-black)' }}>{r.profile?.full_name}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--rel-colors-gray-placeholder)', marginTop: '2px', textTransform: 'capitalize' }}>
+                    {r.profile?.role} · {r.leave_type} Leave
+                  </div>
                 </div>
+                <rel-chip label="Pending" tone="warning" variant="subtle" size="sm" />
               </div>
-              <span style={{ background: '#fef9c3', color: '#854d0e', padding: '3px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: '500' }}>
-                Pending
-              </span>
-            </div>
 
-            {/* Date details */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '10px', marginBottom: '14px' }}>
-              {[
-                { label: 'Start', value: formatDate(r.start_date) },
-                { label: 'End', value: formatDate(r.end_date) },
-                { label: 'Working days', value: `${r.working_days} day${r.working_days !== 1 ? 's' : ''}` },
-              ].map(item => (
-                <div key={item.label} style={{ background: '#f9fafb', borderRadius: '8px', padding: '10px 12px' }}>
-                  <div style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '2px' }}>{item.label}</div>
-                  <div style={{ fontSize: '13px', fontWeight: '500' }}>{item.value}</div>
+              {/* Date details */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '12px', marginBottom: '16px' }}>
+                {[
+                  { label: 'Start', value: formatDate(r.start_date) },
+                  { label: 'End',   value: formatDate(r.end_date) },
+                  { label: 'Working days', value: `${r.working_days} day${r.working_days !== 1 ? 's' : ''}` },
+                ].map(item => (
+                  <div key={item.label} style={{ background: 'var(--rel-colors-gray-surface)', borderRadius: '8px', padding: '10px 12px' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--rel-colors-gray-placeholder)', marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: '600' }}>{item.label}</div>
+                    <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--rel-colors-black)' }}>{item.value}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Employee note */}
+              {r.note && (
+                <div style={{ marginBottom: '16px' }}>
+                  <rel-alert type="info" message1={`Employee note: ${r.note}`} />
                 </div>
-              ))}
-            </div>
+              )}
 
-            {/* Employee note */}
-            {r.note && (
-              <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '10px 12px', marginBottom: '14px', fontSize: '13px', color: '#1e40af' }}>
-                <strong>Employee note:</strong> {r.note}
+              {/* Manager note */}
+              <div style={{ marginBottom: '16px' }}>
+                <NoteField requestId={r.id} onChange={handleNoteChange} />
               </div>
-            )}
 
-            {/* Manager note */}
-            <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: '500', color: '#6b7280', marginBottom: '6px' }}>
-                Add a note <span style={{ fontWeight: 400 }}>(optional)</span>
-              </label>
-              <input type="text" style={input}
-                placeholder="Reason for approval or rejection…"
-                value={notes[r.id] || ''}
-                onChange={e => setNotes(n => ({ ...n, [r.id]: e.target.value }))} />
-            </div>
+              <rel-divider />
 
-            {/* Actions */}
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => handleAction(r.id, 'rejected')}
-                disabled={!!actionLoading}
-                style={{ padding: '9px 18px', border: '1px solid #fecaca', borderRadius: '8px', background: '#fef2f2', color: '#dc2626', fontSize: '13px', fontWeight: '500', cursor: actionLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
-                {actionLoading === r.id + 'rejected' ? 'Rejecting…' : 'Reject'}
-              </button>
-              <button
-                onClick={() => handleAction(r.id, 'approved')}
-                disabled={!!actionLoading}
-                style={{ padding: '9px 18px', border: 'none', borderRadius: '8px', background: actionLoading ? '#a5b4fc' : '#4f46e5', color: '#fff', fontSize: '13px', fontWeight: '500', cursor: actionLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
-                {actionLoading === r.id + 'approved' ? 'Approving…' : 'Approve'}
-              </button>
-            </div>
-
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '16px' }}>
+                <rel-button
+                  variant="secondary"
+                  tone="critical"
+                  size="medium"
+                  disabled={!!actionLoading}
+                  onClick={() => handleAction(r.id, 'rejected')}
+                >
+                  {actionLoading === r.id + 'rejected' ? 'Rejecting…' : 'Reject'}
+                </rel-button>
+                <rel-button
+                  variant="primary"
+                  size="medium"
+                  disabled={!!actionLoading}
+                  onClick={() => handleAction(r.id, 'approved')}
+                >
+                  {actionLoading === r.id + 'approved' ? 'Approving…' : 'Approve'}
+                </rel-button>
+              </div>
+            </rel-card>
           </div>
         ))}
       </div>

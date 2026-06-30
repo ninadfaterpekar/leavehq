@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { formatDate } from '@/lib/leave'
 import Topbar from '@/components/layout/Topbar'
+import NewRequestButton from '@/components/NewRequestButton'
 import { LeaveRequest } from '@/types'
 
 const chipTone: Record<string, string> = {
@@ -50,30 +51,48 @@ export default async function DashboardPage() {
       <div style={{ maxWidth: '900px', margin: '32px auto', padding: '0 24px 48px' }}>
 
         <div style={{ marginBottom: '24px' }}>
-          <h1 style={{ fontSize: '22px', fontWeight: '600' }}>
-            Good {getTimeOfDay()}, {profile?.full_name?.split(' ')[0] || 'there'} 👋
+          <h1 style={{ fontSize: '22px', fontWeight: '600', color: 'var(--rel-colors-black)', lineHeight: 1.2 }}>
+            Good {getTimeOfDay()}, {profile?.full_name?.split(' ')[0] || 'there'}
           </h1>
-          <p style={{ color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+          <p style={{ color: 'var(--rel-colors-gray-primary)', marginTop: '4px', fontSize: '13px', lineHeight: 1.5 }}>
             Here&apos;s your leave summary for {year}.
           </p>
         </div>
 
         {/* Balance cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '12px', marginBottom: '24px' }}>
+        <div
+          style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '12px', marginBottom: '24px' }}
+          aria-live="polite"
+        >
           {[
-            { label: 'Total allowance', value: allowed, sub: 'days this year', color: 'var(--color-text)' },
-            { label: 'Days used', value: usedDays, sub: 'approved + pending', color: usedDays > 15 ? '#f59e0b' : 'var(--color-text)' },
-            { label: 'Remaining', value: remaining, sub: 'days left', color: remaining <= 3 ? '#ef4444' : '#10b981' },
+            {
+              label: 'Total allowance',
+              value: allowed,
+              sub: 'days this year',
+              color: 'var(--rel-colors-black)',
+            },
+            {
+              label: 'Days used',
+              value: usedDays,
+              sub: 'approved + pending',
+              color: 'var(--rel-colors-gray-primary)',
+            },
+            {
+              label: 'Remaining',
+              value: remaining,
+              sub: 'days left',
+              color: remaining <= 3 ? 'var(--rel-colors-error-red)' : 'var(--rel-colors-black)',
+            },
           ].map(card => (
             <rel-card key={card.label}>
               <div style={{ textAlign: 'center', padding: '8px 0' }}>
-                <div style={{ fontSize: '11px', fontWeight: '600', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+                <div style={{ fontSize: '11px', fontWeight: '600', color: 'var(--rel-colors-gray-placeholder)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
                   {card.label}
                 </div>
                 <div style={{ fontSize: '32px', fontWeight: '700', color: card.color, lineHeight: 1 }}>
                   {card.value}
                 </div>
-                <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginTop: '4px' }}>
+                <div style={{ fontSize: '12px', color: 'var(--rel-colors-gray-placeholder)', marginTop: '4px' }}>
                   {card.sub}
                 </div>
               </div>
@@ -84,34 +103,33 @@ export default async function DashboardPage() {
         {/* Leave history */}
         <rel-card>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <span style={{ fontSize: '14px', fontWeight: '600' }}>Leave history</span>
-            <rel-button variant="primary" size="small" onClick="location.href='/request'">
-              + New request
-            </rel-button>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--rel-colors-black)' }}>Leave history</span>
+            <NewRequestButton />
           </div>
 
           {(!requests || requests.length === 0) ? (
-            <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
-              <div style={{ fontSize: '32px', marginBottom: '8px' }}>🗓️</div>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--color-text-secondary)' }}>No leave requests yet</div>
-              <div style={{ fontSize: '13px', marginTop: '4px' }}>Your requests will appear here once submitted.</div>
+            <div style={{ padding: '32px 0', textAlign: 'center' }}>
+              <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--rel-colors-gray-primary)' }}>No leave requests yet</div>
+              <div style={{ fontSize: '13px', color: 'var(--rel-colors-gray-placeholder)', marginTop: '4px', lineHeight: 1.5 }}>
+                Your requests will appear here once submitted.
+              </div>
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ background: '#f9fafb' }}>
+                <tr style={{ background: 'var(--rel-colors-gray-surface)' }}>
                   {['Type', 'Start', 'End', 'Days', 'Status', 'Submitted'].map(h => (
-                    <th key={h} style={{ padding: '10px 12px', textAlign: 'left', fontSize: '11px', fontWeight: '600', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid var(--color-border)' }}>{h}</th>
+                    <th key={h} style={{ padding: '10px 12px', textAlign: 'left', fontSize: '11px', fontWeight: '600', color: 'var(--rel-colors-gray-placeholder)', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: `1px solid var(--rel-colors-gray-border)` }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {requests.map((r: LeaveRequest) => (
-                  <tr key={r.id} style={{ borderBottom: '1px solid #f9fafb' }}>
-                    <td style={{ padding: '12px', fontSize: '13px', textTransform: 'capitalize' }}>{r.leave_type} Leave</td>
-                    <td style={{ padding: '12px', fontSize: '13px' }}>{formatDate(r.start_date)}</td>
-                    <td style={{ padding: '12px', fontSize: '13px' }}>{formatDate(r.end_date)}</td>
-                    <td style={{ padding: '12px', fontSize: '13px', fontWeight: '500' }}>{r.working_days}</td>
+                  <tr key={r.id} style={{ borderBottom: `1px solid var(--rel-colors-gray-surface)` }}>
+                    <td style={{ padding: '12px', fontSize: '13px', color: 'var(--rel-colors-gray-primary)', textTransform: 'capitalize' }}>{r.leave_type} Leave</td>
+                    <td style={{ padding: '12px', fontSize: '13px', color: 'var(--rel-colors-gray-primary)' }}>{formatDate(r.start_date)}</td>
+                    <td style={{ padding: '12px', fontSize: '13px', color: 'var(--rel-colors-gray-primary)' }}>{formatDate(r.end_date)}</td>
+                    <td style={{ padding: '12px', fontSize: '13px', fontWeight: '500', color: 'var(--rel-colors-black)' }}>{r.working_days}</td>
                     <td style={{ padding: '12px' }}>
                       <rel-chip
                         label={chipLabel[r.status] || r.status}
@@ -120,7 +138,7 @@ export default async function DashboardPage() {
                         size="sm"
                       />
                     </td>
-                    <td style={{ padding: '12px', fontSize: '12px', color: 'var(--color-text-tertiary)' }}>
+                    <td style={{ padding: '12px', fontSize: '12px', color: 'var(--rel-colors-gray-placeholder)' }}>
                       {formatDate(r.created_at)}
                     </td>
                   </tr>

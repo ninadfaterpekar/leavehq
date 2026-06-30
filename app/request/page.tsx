@@ -37,6 +37,8 @@ export default function RequestPage() {
   const segmentRef = useRef<any>(null)
   const datePickerRef = useRef<any>(null)
   const rangePickerRef = useRef<any>(null)
+  const checkboxRef = useRef<any>(null)
+  const noteRef = useRef<any>(null)
 
   const today = todayISO()
   const effectiveEnd = mode === 'single' ? startDate : endDate
@@ -52,33 +54,41 @@ export default function RequestPage() {
 
   // Wire up rel-change events
   useEffect(() => {
-    const sel  = selectRef.current
-    const seg  = segmentRef.current
-    const dp   = datePickerRef.current
-    const rp   = rangePickerRef.current
+    const sel = selectRef.current
+    const seg = segmentRef.current
+    const dp  = datePickerRef.current
+    const rp  = rangePickerRef.current
+    const cb  = checkboxRef.current
+    const nf  = noteRef.current
 
     const onLeaveType = (e: any) => { setLeaveType(e.detail.value); setAcknowledged(false) }
     const onMode      = (e: any) => { setMode(e.detail.value); setStartDate(''); setEndDate(''); setAcknowledged(false) }
     const onDate      = (e: any) => { setStartDate(e.detail.value || ''); setAcknowledged(false) }
     const onRange     = (e: any) => { setStartDate(e.detail.from || ''); setEndDate(e.detail.to || ''); setAcknowledged(false) }
+    const onCheck     = (e: any) => setAcknowledged(e.detail.checked)
+    const onNote      = (e: any) => setNote(e.detail.value || '')
 
     sel?.addEventListener('rel-change', onLeaveType)
     seg?.addEventListener('rel-change', onMode)
     dp?.addEventListener('rel-change', onDate)
     rp?.addEventListener('rel-change', onRange)
+    cb?.addEventListener('rel-change', onCheck)
+    nf?.addEventListener('rel-change', onNote)
 
     return () => {
       sel?.removeEventListener('rel-change', onLeaveType)
       seg?.removeEventListener('rel-change', onMode)
       dp?.removeEventListener('rel-change', onDate)
       rp?.removeEventListener('rel-change', onRange)
+      cb?.removeEventListener('rel-change', onCheck)
+      nf?.removeEventListener('rel-change', onNote)
     }
   }, [])
 
   useEffect(() => {
     async function load() {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { return }
+      if (!session) return
       const { data: p } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
       if (p) setProfile(p)
       const year = new Date().getFullYear()
@@ -111,6 +121,7 @@ export default function RequestPage() {
       setStartDate(''); setEndDate(''); setNote(''); setAcknowledged(false)
       if (datePickerRef.current) datePickerRef.current.value = null
       if (rangePickerRef.current) { rangePickerRef.current.from = ''; rangePickerRef.current.to = '' }
+      if (checkboxRef.current) checkboxRef.current.checked = false
     } else {
       setStatus('error')
       setErrorMsg(data.error || 'Something went wrong')
@@ -123,28 +134,31 @@ export default function RequestPage() {
       <Topbar profile={profile} />
       <div style={{ maxWidth: '680px', margin: '32px auto', padding: '0 24px 48px' }}>
 
-        <h1 style={{ fontSize: 'var(--rel-fontSizes-lg)', fontWeight: 'var(--rel-fontWeights-semibold)', marginBottom: '4px', color: 'var(--rel-color-text-heading)' }}>
+        <h1 style={{ fontSize: '22px', fontWeight: '600', marginBottom: '4px', color: 'var(--rel-colors-black)', lineHeight: 1.2 }}>
           Request Leave
         </h1>
-        <p style={{ color: 'var(--rel-color-text-secondary)', marginBottom: '24px' }}>
+        <p style={{ color: 'var(--rel-colors-gray-primary)', marginBottom: '24px', fontSize: '13px', lineHeight: 1.5 }}>
           Submit a request. Your manager will be notified by email.
         </p>
 
         {/* Balance summary */}
         <rel-card>
-          <div style={{ fontSize: 'var(--rel-fontSizes-md)', fontWeight: 'var(--rel-fontWeights-semibold)', marginBottom: '16px' }}>
+          <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px', color: 'var(--rel-colors-black)' }}>
             Your leave balance — {new Date().getFullYear()}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '16px', textAlign: 'center' }}>
+          <div
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '16px', textAlign: 'center' }}
+            aria-live="polite"
+          >
             {[
-              { label: 'Allowed',   value: balance.allowed,   color: 'var(--rel-color-text-heading)' },
-              { label: 'Used',      value: balance.used,      color: balance.used > 15 ? 'var(--rel-colors-orange-warning)' : 'var(--rel-color-text-heading)' },
-              { label: 'Remaining', value: balance.remaining, color: balance.remaining <= 3 ? 'var(--rel-colors-red-primary)' : 'var(--rel-colors-green-success)' },
+              { label: 'Allowed',   value: balance.allowed,   color: 'var(--rel-colors-black)' },
+              { label: 'Used',      value: balance.used,      color: 'var(--rel-colors-gray-primary)' },
+              { label: 'Remaining', value: balance.remaining, color: balance.remaining <= 3 ? 'var(--rel-colors-error-red)' : 'var(--rel-colors-black)' },
             ].map(b => (
               <div key={b.label}>
-                <div style={{ fontSize: 'var(--rel-fontSizes-xs)', fontWeight: 'var(--rel-fontWeights-medium)', color: 'var(--rel-color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>{b.label}</div>
-                <div style={{ fontSize: 'var(--rel-fontSizes-3xl)', fontWeight: 'var(--rel-fontWeights-bold)', color: b.color, lineHeight: 1 }}>{b.value}</div>
-                <div style={{ fontSize: 'var(--rel-fontSizes-sm)', color: 'var(--rel-color-text-secondary)', marginTop: '2px' }}>days</div>
+                <div style={{ fontSize: '11px', fontWeight: '600', color: 'var(--rel-colors-gray-placeholder)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>{b.label}</div>
+                <div style={{ fontSize: '32px', fontWeight: '700', color: b.color, lineHeight: 1 }}>{b.value}</div>
+                <div style={{ fontSize: '12px', color: 'var(--rel-colors-gray-placeholder)', marginTop: '2px' }}>days</div>
               </div>
             ))}
           </div>
@@ -158,7 +172,7 @@ export default function RequestPage() {
 
         {/* Form */}
         <rel-card>
-          <div style={{ fontSize: 'var(--rel-fontSizes-md)', fontWeight: 'var(--rel-fontWeights-semibold)', marginBottom: '20px' }}>
+          <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '20px', color: 'var(--rel-colors-black)' }}>
             Leave details
           </div>
 
@@ -174,27 +188,17 @@ export default function RequestPage() {
           )}
 
           {/* Leave type */}
-          <div style={{ marginBottom: '20px' }}>
-            <rel-select
-              ref={selectRef}
-              label="Leave type"
-              selected={leaveType}
-              no-search
-              size="medium"
-            />
+          <div style={{ marginBottom: '16px' }}>
+            <rel-select ref={selectRef} label="Leave type" selected={leaveType} no-search size="medium" />
           </div>
 
           {/* Single / Range toggle */}
-          <div style={{ marginBottom: '20px' }}>
-            <rel-segmented-button
-              ref={segmentRef}
-              active={mode}
-              size="medium"
-            />
+          <div style={{ marginBottom: '16px' }}>
+            <rel-segmented-button ref={segmentRef} active={mode} size="medium" />
           </div>
 
           {/* Date picker */}
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{ marginBottom: '16px' }}>
             {mode === 'single' ? (
               <rel-date-picker
                 ref={datePickerRef}
@@ -219,58 +223,46 @@ export default function RequestPage() {
 
           {/* Days calculated */}
           {workingDays > 0 && (
-            <div style={{ marginBottom: '16px' }}>
+            <div style={{ marginBottom: '16px' }} aria-live="polite">
               <rel-alert type="info" message1={`${workingDays} working day${workingDays !== 1 ? 's' : ''} requested`} />
             </div>
           )}
 
-          {/* Pay deduction warning */}
+          {/* Pay deduction warning + acknowledgement */}
           {deduction.applies && workingDays > 0 && (
-            <div style={{ marginBottom: '16px' }}>
+            <div style={{ marginBottom: '16px' }} aria-live="polite">
               <rel-alert
                 type="warning"
                 message1={`Pay deduction applies — ${deduction.excess_days} day${deduction.excess_days !== 1 ? 's' : ''} beyond your allowance will reduce your pay by ${deduction.formatted}.`}
               />
-              <label style={{
-                display: 'flex', alignItems: 'flex-start', gap: '10px',
-                padding: '12px 14px', marginTop: '8px', cursor: 'pointer',
-                background: 'var(--rel-background-warning)',
-                border: '1px solid var(--rel-border-warning)',
-                borderRadius: 'var(--rel-borders-radius-border-radius-200)',
-                fontSize: 'var(--rel-fontSizes-md)',
-                color: 'var(--rel-colors-orange-warning)',
-                fontWeight: 'var(--rel-fontWeights-medium)' as any,
-              }}>
-                <input type="checkbox" checked={acknowledged} onChange={e => setAcknowledged(e.target.checked)}
-                  style={{ marginTop: '2px', width: '15px', height: '15px', flexShrink: 0 }} />
-                I understand this leave will reduce my pay by {deduction.formatted} this period.
-              </label>
+              <div style={{ marginTop: '8px' }}>
+                <rel-checkbox
+                  ref={checkboxRef}
+                  checked={acknowledged}
+                  label={`I understand this leave will reduce my pay by ${deduction.formatted} this period.`}
+                />
+              </div>
             </div>
           )}
 
           <rel-divider />
 
           {/* Note */}
-          <div style={{ margin: '20px 0' }}>
+          <div style={{ margin: '16px 0' }}>
             <rel-textfield
+              ref={noteRef}
               label="Note for your manager (optional)"
               placeholder="Add any context that might help your manager..."
               value={note}
-              onInput={(e: any) => setNote(e.target.value)}
             />
           </div>
 
           {/* Actions */}
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-            <rel-button variant="default" size="medium" onClick={() => router.push('/dashboard')}>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+            <rel-button variant="secondary" size="medium" onClick={() => router.push('/dashboard')}>
               Cancel
             </rel-button>
-            <rel-button
-              variant="primary"
-              size="medium"
-              disabled={!canSubmit || loading}
-              onClick={handleSubmit}
-            >
+            <rel-button variant="primary" size="medium" disabled={!canSubmit || loading} onClick={handleSubmit}>
               {loading ? 'Submitting…' : 'Submit request'}
             </rel-button>
           </div>
