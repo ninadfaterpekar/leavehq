@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 import { formatDate } from '@/lib/leave'
 import { useRouter } from 'next/navigation'
-import Topbar from '@/components/layout/Topbar'
+import Sidebar from '@/components/layout/Sidebar'
 
 function NoteField({ requestId, onChange }: { requestId: string; onChange: (id: string, v: string) => void }) {
   const ref = useRef<any>(null)
@@ -78,7 +78,8 @@ export default function ApprovalsPage() {
 
   return (
     <>
-      <Topbar profile={profile} />
+      <Sidebar profile={profile} />
+      <div style={{ marginLeft: '240px' }}>
       <div style={{ maxWidth: '800px', margin: '32px auto', padding: '0 24px 48px' }}>
 
         <h1 style={{ fontSize: '22px', fontWeight: '600', marginBottom: '4px', color: 'var(--rel-colors-black)', lineHeight: 1.2 }}>
@@ -170,6 +171,7 @@ export default function ApprovalsPage() {
             </rel-card>
           </div>
         ))}
+      </div>
       </div>
     </>
   )

@@ -1,7 +1,8 @@
 export const dynamic = 'force-dynamic'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { redirect } from 'next/navigation'
 import { formatDate } from '@/lib/leave'
-import Topbar from '@/components/layout/Topbar'
+import Sidebar from '@/components/layout/Sidebar'
 import NewRequestButton from '@/components/NewRequestButton'
 import { LeaveRequest } from '@/types'
 
@@ -19,7 +20,7 @@ const chipLabel: Record<string, string> = {
 export default async function DashboardPage() {
   const supabase = createServerSupabaseClient()
   const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return null
+  if (!session) redirect('/auth')
 
   const { data: profile } = await supabase
     .from('profiles').select('*').eq('id', session.user.id).single()
@@ -47,7 +48,8 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <Topbar profile={profile} />
+      <Sidebar profile={profile} />
+      <div style={{ marginLeft: '240px' }}>
       <div style={{ maxWidth: '900px', margin: '32px auto', padding: '0 24px 48px' }}>
 
         <div style={{ marginBottom: '24px' }}>
@@ -148,6 +150,7 @@ export default async function DashboardPage() {
           )}
         </rel-card>
 
+      </div>
       </div>
     </>
   )

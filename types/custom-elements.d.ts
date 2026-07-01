@@ -29,6 +29,7 @@ declare global {
       'rel-range-picker': CustomElement<{ from?: string; to?: string; 'min-date'?: string; 'max-date'?: string; disabled?: boolean; placeholder?: string; mode?: string }>
       'rel-segmented-button': CustomElement<{ active?: string; size?: string; align?: string }>
       'rel-checkbox': CustomElement<{ checked?: boolean; value?: string; disabled?: boolean; label?: string }>
+      'rel-icon': CustomElement<{ name?: string; size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'; tone?: string; color?: string }>
     }
   }
 }

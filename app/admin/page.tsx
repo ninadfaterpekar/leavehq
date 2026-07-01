@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import Topbar from '@/components/layout/Topbar'
+import Sidebar from '@/components/layout/Sidebar'
 
 function DesignSelect({ options, value, onChange }: {
   options: { value: string; label: string }[]
@@ -104,7 +104,8 @@ export default function AdminPage() {
 
   return (
     <>
-      <Topbar profile={profile} />
+      <Sidebar profile={profile} />
+      <div style={{ marginLeft: '240px' }}>
       <div style={{ maxWidth: '1000px', margin: '32px auto', padding: '0 24px 48px' }}>
         <h1 style={{ fontSize: '22px', fontWeight: '600', marginBottom: '4px', color: 'var(--rel-colors-black)', lineHeight: 1.2 }}>
           Admin Panel
@@ -179,6 +180,7 @@ export default function AdminPage() {
             </table>
           </rel-card>
         )}
+      </div>
       </div>
     </>
   )

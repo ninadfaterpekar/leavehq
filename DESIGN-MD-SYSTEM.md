@@ -36,7 +36,7 @@ No component, color, spacing value, or typographic decision should be made that 
 
 ### Date picker
 - Use `<rel-date-picker>` for all single date inputs.
-- For date ranges, use two `<rel-date-picker>` components side by side — start date and end date — labelled clearly.
+- For date ranges, use two `<rel-range-picker>` components side by side — start date and end date — labelled clearly.
 - Always set `min` to today's date on future-only fields. Always block weekends via the component's disabled-dates mechanism.
 - Labels are always visible. Never use placeholder text as a label substitute.
 

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 import { getWorkingDays, calcDeduction, todayISO } from '@/lib/leave'
 import { useRouter } from 'next/navigation'
-import Topbar from '@/components/layout/Topbar'
+import Sidebar from '@/components/layout/Sidebar'
 import { Profile } from '@/types'
 
 const LEAVE_OPTIONS = [
@@ -131,7 +131,8 @@ export default function RequestPage() {
 
   return (
     <>
-      <Topbar profile={profile} />
+      <Sidebar profile={profile} />
+      <div style={{ marginLeft: '240px' }}>
       <div style={{ maxWidth: '680px', margin: '32px auto', padding: '0 24px 48px' }}>
 
         <h1 style={{ fontSize: '22px', fontWeight: '600', marginBottom: '4px', color: 'var(--rel-colors-black)', lineHeight: 1.2 }}>
@@ -267,6 +268,7 @@ export default function RequestPage() {
             </rel-button>
           </div>
         </rel-card>
+      </div>
       </div>
     </>
   )
